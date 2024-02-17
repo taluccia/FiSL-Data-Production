@@ -47,3 +47,17 @@ po/*~
 
 # RStudio Connect folder
 rsconnect/
+
+
+# For Mac users computer specific files
+**/.DS_Store
+#**/._.DS_Store
+#**/scripts/._FiguresPredictedvsMeasured.Rmd
+**/._FiSL-Data-Production.Rproj
+
+# exclude specific folders from push to github
+figures/*
+images/*
+files/*
+data/*
+outputs/*
