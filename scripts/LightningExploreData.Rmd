@@ -1,0 +1,443 @@
+---
+title: "LightningExploreData"
+author: "Anna Talucci"
+date: "2024-02-15"
+output: html_document
+---
+
+# Overview
+
+Explore Alaska Lightning data. Data for download within the zipped files on the [site](https://fire.ak.blm.gov/predsvcs/maps.php).
+
+Lightning data to be used by Xanthe to evaluate wildfire probability. 
+
+Notes:
+-- Temporal period: 2013 to 2022
+-- Spatial domain: Ecoregions of AK boreal interior, boreal cordillera, taiga plains, and taiga shield.
+-- Lightning : yes I think we want it as precise as possible.  However, in the proposal we outlined a subsampling plan where we get this data for 100 blocks/ecoregion stratified by fire occurrence (1 block ~ 50,000 ha). I am open to a different approach but maybe we don't need lightning across the entire spatial domain?
+-- 30m = yes
+-- coordinate system = Canada Albers Equal Area Conic projection (ESRI:102001)
+
+Notes on Lightning Data
+-- Data have been clipped to show only those strikes that fall within 250 km of Alaska, Yukon Territory, British Columbia, and Northwest Territories
+# Packages
+
+```{r}
+library(tidyverse)
+library(sf)
+library(lubridate)
+```
+
+# Data
+```{r}
+shp = st_read("../data/lightningData/CurrentYearLightning_SHP/TOA_STRIKES.shp", "TOA_STRIKES")
+```
+
+```{r}
+txt = read_csv("../data/lightningData/CurrentYearLightning_TXT/TOA_STRIKES.txt")
+```
+```{r}
+historical = read_csv("../data/lightningData/Historical_Lightning_as_txt/Historical_Lightning_2012_2023_TOA_AlaskaAlbersNAD83.txt")
+```
+```{r}
+usa = st_read("../data/lightningData/cb_2018_us_state_20m/cb_2018_us_state_20m.shp", "cb_2018_us_state_20m")
+```
+
+## World map
+https://datacatalog.worldbank.org/dataset/world-bank-official-boundaries
+
+```{r}
+wrld = st_read("../data/spatialData/world/WB_countries_Admin0_10m.shp", "WB_countries_Admin0_10m")
+```
+
+# Dataframes
+```{r}
+shp
+```
+
+```{r}
+txt
+```
+
+```{r}
+historical
+```
+
+```{r}
+usa
+```
+
+```{r}
+na = wrld %>% filter(FORMAL_EN %in% c("Canada", "United States of America"))
+```
+# Explore types of data
+```{r}
+unique(historical$STROKETYPE)
+unique(historical$POLARITY)
+```
+
+# Get AK boundary
+```{r}
+ak = usa %>% filter(STUSPS=="AK")
+```
+
+# Split Date time column into two
+```{r}
+( historical1 = historical %>% 
+  separate(LOCALDATETIME, into = c("LocalDate", "LocalTime"), sep = " (?=[^ ]+$)", remove = FALSE) %>%
+  mutate(LocalDate = mdy(LocalDate)) %>%
+  dplyr::mutate(year = lubridate::year(LocalDate), 
+                month = lubridate::month(LocalDate), 
+                day = lubridate::day(LocalDate))
+)
+```
+
+
+
+# Quick view Plots
+```{r}
+plot(st_geometry(shp))
+```
+
+```{r}
+plot(st_geometry(ak))
+```
+
+
+# Create points shapefile for Historic Lightning
+
+## Function to make points
+```{r}
+df_to_sf <- function(x){
+  st_as_sf(x, coords = c("LONGITUDE","LATITUDE"), crs = 4326, remove = FALSE)
+}
+```
+
+## Drop Lat Lon NA and convert to shapefile 
+```{r}
+( historical2 = historical1 %>% df_to_sf() )
+```
+
+## write to shapefile
+```{r eval=FALSE, include=FALSE}
+st_write(historical2, "../outputs/spatialDataCreate/HistoricalLightning.shp", driver="ESRI Shapefile")
+```
+
+# Change projections
+roads <- st_transform(roads, crs = 4326)
+EPSG:3338
+```{r}
+ls24 = st_transform(shp, crs=3338)
+ak1 = st_transform(ak, crs=3338)
+na1 = st_transform(na, crs=3338)
+historical3 = st_transform(historical2, crs=3338)
+```
+
+# FIlter Historical by summer month and years
+```{r}
+historical13 = historical3 %>% filter(year==2013) %>% filter(month %in% c(5, 6, 7, 8, 9))
+historical14 = historical3 %>% filter(year==2014) %>% filter(month %in% c(5, 6, 7, 8, 9))
+historical15 = historical3 %>% filter(year==2015) %>% filter(month %in% c(5, 6, 7, 8, 9))
+historical16 = historical3 %>% filter(year==2016) %>% filter(month %in% c(5, 6, 7, 8, 9))
+historical17 = historical3 %>% filter(year==2017) %>% filter(month %in% c(5, 6, 7, 8, 9))
+historical18 = historical3 %>% filter(year==2018) %>% filter(month %in% c(5, 6, 7, 8, 9))
+historical19 = historical3 %>% filter(year==2019) %>% filter(month %in% c(5, 6, 7, 8, 9))
+historical20 = historical3 %>% filter(year==2020) %>% filter(month %in% c(5, 6, 7, 8, 9))
+historical21 = historical3 %>% filter(year==2021) %>% filter(month %in% c(5, 6, 7, 8, 9))
+historical22 = historical3 %>% filter(year==2022) %>% filter(month %in% c(5, 6, 7, 8, 9))
+```
+# Maps
+
+## Map area zoom
+```{r}
+#### zoom to kamchatka, different projection ####
+
+zoom_to <- c(-150.46, 64.93)  # ~ center of Kamchatka
+zoom_level <- 3.5
+
+# Lambert azimuthal equal-area projection around center of interest
+#target_crs <- polarProj#sprintf('+proj=laea +lon_0=%f +lat_0=%f', zoom_to[1], zoom_to[2])
+
+
+C <- 40075016.686   # ~ circumference of Earth in meters
+x_span <- C / 2^(zoom_level+.1)
+y_span <- C / 2^(zoom_level+.5)   # also sets aspect ratio
+
+zoom_to_xy <- st_transform(st_sfc(st_point(zoom_to), crs = 4326), crs = 3338)
+zoom_to_xy
+
+disp_window <- st_sfc(st_point(st_coordinates(zoom_to_xy - c(x_span / 2, y_span / 2))),
+                      st_point(st_coordinates(zoom_to_xy + c(x_span / 2, y_span / 2))),
+                      crs = 3338)
+
+```
+
+## Map Current 2024
+Current Lightning is available as a shapefile for download. 
+
+   geom_sf(data = wwf, aes(fill = ECO_NAME, color=ECO_NAME, size=prct),  pch=21, stroke =1, alpha=.75) +
+  geom_sf_text(data = wwf, aes(label = prct), size=2) +
+    scale_fill_manual(values=ecoPalette) +
+  scale_color_manual(values=c("black", "black", "black","black","black","black","black","black","black","black","black","black","black")) +
+```{r}
+ggplot() +
+     geom_sf(data = na1, fill = "#F9F6EE", colour="#A9AB9D") +
+    geom_sf(data = ls24, aes(fill=STROKETYPE, color=STROKETYPE), pch=21, stroke =1, alpha=.25) +
+  scale_fill_manual(values=c('#fc8d59', '#998ec3'), labels  = c("Cloud stroke", "Ground stroke"),
+                      name = "Stroke Type") +
+  scale_color_manual(values=c('#fc8d59', '#998ec3'), labels  = c("Cloud stroke", "Ground stroke"),
+                      name = "Stroke type") +
+  
+  #coord_sf() +
+  
+  coord_sf(xlim = st_coordinates(disp_window)[,'X'], ylim = st_coordinates(disp_window)[,'Y']) +
+  theme(panel.grid.major = element_line(color = gray(0.5), linetype = "dashed", size = 0.5), 
+        panel.background = element_rect(fill = "#C5D8D7")) +
+  theme(plot.margin=unit(c(0,0,0,0), "mm")) + 
+  theme(legend.position = "bottom", 
+        axis.title.x = element_blank(), 
+        axis.title.y = element_blank())
+
+```
+
+## Map 2013
+May-September
+```{r}
+ggplot() +
+     geom_sf(data = na1, fill = "#F9F6EE", colour="#A9AB9D") +
+    geom_sf(data = historical13, aes(fill=STROKETYPE, color=STROKETYPE), pch=21, stroke =1, alpha=.25) +
+  scale_fill_manual(values=c('#fc8d59', '#998ec3'), labels  = c("Cloud stroke", "Ground stroke"),
+                      name = "Stroke type") +
+  scale_color_manual(values=c('#fc8d59', '#998ec3'), labels  = c("Cloud stroke", "Ground stroke"),
+                      name = "Stroke type") +
+  
+  #coord_sf() +
+  
+  coord_sf(xlim = st_coordinates(disp_window)[,'X'], ylim = st_coordinates(disp_window)[,'Y']) +
+  theme(panel.grid.major = element_line(color = gray(0.5), linetype = "dashed", size = 0.5), 
+        panel.background = element_rect(fill = "#C5D8D7")) +
+  theme(plot.margin=unit(c(0,0,0,0), "mm")) + 
+  theme(legend.position = "bottom", 
+        axis.title.x = element_blank(), 
+        axis.title.y = element_blank())
+
+```
+
+## Map 2014
+May-September
+```{r}
+ggplot() +
+     geom_sf(data = na1, fill = "#F9F6EE", colour="#A9AB9D") +
+    geom_sf(data = historical14, aes(fill=STROKETYPE, color=STROKETYPE), pch=21, stroke =1, alpha=.25) +
+  scale_fill_manual(values=c('#fc8d59', '#998ec3'), labels  = c("Cloud stroke", "Ground stroke"),
+                      name = "Stroke type") +
+  scale_color_manual(values=c('#fc8d59', '#998ec3'), labels  = c("Cloud stroke", "Ground stroke"),
+                      name = "Stroke type") +
+  
+  #coord_sf() +
+  
+  coord_sf(xlim = st_coordinates(disp_window)[,'X'], ylim = st_coordinates(disp_window)[,'Y']) +
+  theme(panel.grid.major = element_line(color = gray(0.5), linetype = "dashed", size = 0.5), 
+        panel.background = element_rect(fill = "#C5D8D7")) +
+  theme(plot.margin=unit(c(0,0,0,0), "mm")) + 
+  theme(legend.position = "bottom", 
+        axis.title.x = element_blank(), 
+        axis.title.y = element_blank())
+
+```
+
+## Map 2015
+May-September
+```{r}
+ggplot() +
+     geom_sf(data = na1, fill = "#F9F6EE", colour="#A9AB9D") +
+    geom_sf(data = historical15, aes(fill=STROKETYPE, color=STROKETYPE), pch=21, stroke =1, alpha=.25) +
+  scale_fill_manual(values=c('#fc8d59', '#998ec3'), labels  = c("Cloud stroke", "Ground stroke"),
+                      name = "Stroke type") +
+  scale_color_manual(values=c('#fc8d59', '#998ec3'), labels  = c("Cloud stroke", "Ground stroke"),
+                      name = "Stroke type") +
+  
+  #coord_sf() +
+  
+  coord_sf(xlim = st_coordinates(disp_window)[,'X'], ylim = st_coordinates(disp_window)[,'Y']) +
+  theme(panel.grid.major = element_line(color = gray(0.5), linetype = "dashed", size = 0.5), 
+        panel.background = element_rect(fill = "#C5D8D7")) +
+  theme(plot.margin=unit(c(0,0,0,0), "mm")) + 
+  theme(legend.position = "bottom", 
+        axis.title.x = element_blank(), 
+        axis.title.y = element_blank())
+
+```
+
+## Map 2016
+May-September
+```{r}
+ggplot() +
+     geom_sf(data = na1, fill = "#F9F6EE", colour="#A9AB9D") +
+    geom_sf(data = historical16, aes(fill=STROKETYPE, color=STROKETYPE), pch=21, stroke =1, alpha=.25) +
+  scale_fill_manual(values=c('#fc8d59', '#998ec3'), labels  = c("Cloud stroke", "Ground stroke"),
+                      name = "Stroke type") +
+  scale_color_manual(values=c('#fc8d59', '#998ec3'), labels  = c("Cloud stroke", "Ground stroke"),
+                      name = "Stroke type") +
+  
+  #coord_sf() +
+  
+  coord_sf(xlim = st_coordinates(disp_window)[,'X'], ylim = st_coordinates(disp_window)[,'Y']) +
+  theme(panel.grid.major = element_line(color = gray(0.5), linetype = "dashed", size = 0.5), 
+        panel.background = element_rect(fill = "#C5D8D7")) +
+  theme(plot.margin=unit(c(0,0,0,0), "mm")) + 
+  theme(legend.position = "bottom", 
+        axis.title.x = element_blank(), 
+        axis.title.y = element_blank())
+
+```
+
+## Map 2017
+May-September
+```{r}
+ggplot() +
+     geom_sf(data = na1, fill = "#F9F6EE", colour="#A9AB9D") +
+    geom_sf(data = historical17, aes(fill=STROKETYPE, color=STROKETYPE), pch=21, stroke =1, alpha=.25) +
+  scale_fill_manual(values=c('#fc8d59', '#998ec3'), labels  = c("Cloud stroke", "Ground stroke"),
+                      name = "Stroke type") +
+  scale_color_manual(values=c('#fc8d59', '#998ec3'), labels  = c("Cloud stroke", "Ground stroke"),
+                      name = "Stroke type") +
+  
+  #coord_sf() +
+  
+  coord_sf(xlim = st_coordinates(disp_window)[,'X'], ylim = st_coordinates(disp_window)[,'Y']) +
+  theme(panel.grid.major = element_line(color = gray(0.5), linetype = "dashed", size = 0.5), 
+        panel.background = element_rect(fill = "#C5D8D7")) +
+  theme(plot.margin=unit(c(0,0,0,0), "mm")) + 
+  theme(legend.position = "bottom", 
+        axis.title.x = element_blank(), 
+        axis.title.y = element_blank())
+
+```
+
+## Map 2018
+May-September
+```{r}
+ggplot() +
+     geom_sf(data = na1, fill = "#F9F6EE", colour="#A9AB9D") +
+    geom_sf(data = historical18, aes(fill=STROKETYPE, color=STROKETYPE), pch=21, stroke =1, alpha=.25) +
+  scale_fill_manual(values=c('#fc8d59', '#998ec3'), labels  = c("Cloud stroke", "Ground stroke"),
+                      name = "Stroke type") +
+  scale_color_manual(values=c('#fc8d59', '#998ec3'), labels  = c("Cloud stroke", "Ground stroke"),
+                      name = "Stroke type") +
+  
+  #coord_sf() +
+  
+  coord_sf(xlim = st_coordinates(disp_window)[,'X'], ylim = st_coordinates(disp_window)[,'Y']) +
+  theme(panel.grid.major = element_line(color = gray(0.5), linetype = "dashed", size = 0.5), 
+        panel.background = element_rect(fill = "#C5D8D7")) +
+  theme(plot.margin=unit(c(0,0,0,0), "mm")) + 
+  theme(legend.position = "bottom", 
+        axis.title.x = element_blank(), 
+        axis.title.y = element_blank())
+
+```
+
+## Map 2019
+May-September
+```{r}
+ggplot() +
+     geom_sf(data = na1, fill = "#F9F6EE", colour="#A9AB9D") +
+    geom_sf(data = historical19, aes(fill=STROKETYPE, color=STROKETYPE), pch=21, stroke =1, alpha=.25) +
+  scale_fill_manual(values=c('#fc8d59', '#998ec3'), labels  = c("Cloud stroke", "Ground stroke"),
+                      name = "Stroke type") +
+  scale_color_manual(values=c('#fc8d59', '#998ec3'), labels  = c("Cloud stroke", "Ground stroke"),
+                      name = "Stroke type") +
+  
+  #coord_sf() +
+  
+  coord_sf(xlim = st_coordinates(disp_window)[,'X'], ylim = st_coordinates(disp_window)[,'Y']) +
+  theme(panel.grid.major = element_line(color = gray(0.5), linetype = "dashed", size = 0.5), 
+        panel.background = element_rect(fill = "#C5D8D7")) +
+  theme(plot.margin=unit(c(0,0,0,0), "mm")) + 
+  theme(legend.position = "bottom", 
+        axis.title.x = element_blank(), 
+        axis.title.y = element_blank())
+
+```
+
+## Map 2020
+May-September
+```{r}
+ggplot() +
+     geom_sf(data = na1, fill = "#F9F6EE", colour="#A9AB9D") +
+    geom_sf(data = historical20, aes(fill=STROKETYPE, color=STROKETYPE), pch=21, stroke =1, alpha=.25) +
+  scale_fill_manual(values=c('#fc8d59', '#998ec3'), labels  = c("Cloud stroke", "Ground stroke"),
+                      name = "Stroke type") +
+  scale_color_manual(values=c('#fc8d59', '#998ec3'), labels  = c("Cloud stroke", "Ground stroke"),
+                      name = "Stroke type") +
+  
+  #coord_sf() +
+  
+  coord_sf(xlim = st_coordinates(disp_window)[,'X'], ylim = st_coordinates(disp_window)[,'Y']) +
+  theme(panel.grid.major = element_line(color = gray(0.5), linetype = "dashed", size = 0.5), 
+        panel.background = element_rect(fill = "#C5D8D7")) +
+  theme(plot.margin=unit(c(0,0,0,0), "mm")) + 
+  theme(legend.position = "bottom", 
+        axis.title.x = element_blank(), 
+        axis.title.y = element_blank())
+
+```
+
+## Map 2021
+May-September
+```{r}
+ggplot() +
+     geom_sf(data = na1, fill = "#F9F6EE", colour="#A9AB9D") +
+    geom_sf(data = historical21, aes(fill=STROKETYPE, color=STROKETYPE), pch=21, stroke =1, alpha=.25) +
+  scale_fill_manual(values=c('#fc8d59', '#998ec3'), labels  = c("Cloud stroke", "Ground stroke"),
+                      name = "Stroke type") +
+  scale_color_manual(values=c('#fc8d59', '#998ec3'), labels  = c("Cloud stroke", "Ground stroke"),
+                      name = "Stroke type") +
+  
+  #coord_sf() +
+  
+  coord_sf(xlim = st_coordinates(disp_window)[,'X'], ylim = st_coordinates(disp_window)[,'Y']) +
+  theme(panel.grid.major = element_line(color = gray(0.5), linetype = "dashed", size = 0.5), 
+        panel.background = element_rect(fill = "#C5D8D7")) +
+  theme(plot.margin=unit(c(0,0,0,0), "mm")) + 
+  theme(legend.position = "bottom", 
+        axis.title.x = element_blank(), 
+        axis.title.y = element_blank())
+
+```
+
+## Map 2022
+May-September
+```{r}
+ggplot() +
+     geom_sf(data = na1, fill = "#F9F6EE", colour="#A9AB9D") +
+    geom_sf(data = historical22, aes(fill=STROKETYPE, color=STROKETYPE), pch=21, stroke =1, alpha=.25) +
+  scale_fill_manual(values=c('#fc8d59', '#998ec3'), labels  = c("Cloud stroke", "Ground stroke"),
+                      name = "Stroke type") +
+  scale_color_manual(values=c('#fc8d59', '#998ec3'), labels  = c("Cloud stroke", "Ground stroke"),
+                      name = "Stroke type") +
+  
+  #coord_sf() +
+  
+  coord_sf(xlim = st_coordinates(disp_window)[,'X'], ylim = st_coordinates(disp_window)[,'Y']) +
+  theme(panel.grid.major = element_line(color = gray(0.5), linetype = "dashed", size = 0.5), 
+        panel.background = element_rect(fill = "#C5D8D7")) +
+  theme(plot.margin=unit(c(0,0,0,0), "mm")) + 
+  theme(legend.position = "bottom", 
+        axis.title.x = element_blank(), 
+        axis.title.y = element_blank())
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
