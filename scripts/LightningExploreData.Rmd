@@ -70,6 +70,7 @@ usa
 ```{r}
 na = wrld %>% filter(FORMAL_EN %in% c("Canada", "United States of America"))
 ```
+
 # Explore types of data
 ```{r}
 unique(historical$STROKETYPE)
@@ -146,6 +147,7 @@ historical20 = historical3 %>% filter(year==2020) %>% filter(month %in% c(5, 6, 
 historical21 = historical3 %>% filter(year==2021) %>% filter(month %in% c(5, 6, 7, 8, 9))
 historical22 = historical3 %>% filter(year==2022) %>% filter(month %in% c(5, 6, 7, 8, 9))
 ```
+
 # Maps
 
 ## Map area zoom
@@ -173,25 +175,22 @@ disp_window <- st_sfc(st_point(st_coordinates(zoom_to_xy - c(x_span / 2, y_span 
 ```
 
 ## Map Current 2024
+
 Current Lightning is available as a shapefile for download. 
 
-   geom_sf(data = wwf, aes(fill = ECO_NAME, color=ECO_NAME, size=prct),  pch=21, stroke =1, alpha=.75) +
-  geom_sf_text(data = wwf, aes(label = prct), size=2) +
-    scale_fill_manual(values=ecoPalette) +
-  scale_color_manual(values=c("black", "black", "black","black","black","black","black","black","black","black","black","black","black")) +
-```{r}
+```{r map2024, echo=FALSE}
 ggplot() +
      geom_sf(data = na1, fill = "#F9F6EE", colour="#A9AB9D") +
     geom_sf(data = ls24, aes(fill=STROKETYPE, color=STROKETYPE), pch=21, stroke =1, alpha=.25) +
   scale_fill_manual(values=c('#fc8d59', '#998ec3'), labels  = c("Cloud stroke", "Ground stroke"),
                       name = "Stroke Type") +
   scale_color_manual(values=c('#fc8d59', '#998ec3'), labels  = c("Cloud stroke", "Ground stroke"),
-                      name = "Stroke type") +
+                      name = "Stroke Type") +
   
   #coord_sf() +
   
   coord_sf(xlim = st_coordinates(disp_window)[,'X'], ylim = st_coordinates(disp_window)[,'Y']) +
-  theme(panel.grid.major = element_line(color = gray(0.5), linetype = "dashed", size = 0.5), 
+  theme(panel.grid.major = element_line(color = gray(0.5), linetype = "dashed", linewidth = 0.5), 
         panel.background = element_rect(fill = "#C5D8D7")) +
   theme(plot.margin=unit(c(0,0,0,0), "mm")) + 
   theme(legend.position = "bottom", 
@@ -201,8 +200,10 @@ ggplot() +
 ```
 
 ## Map 2013
-May-September
-```{r}
+
+Lightning May-September *n*=111,570 
+
+```{r map2013, echo=FALSE}
 ggplot() +
      geom_sf(data = na1, fill = "#F9F6EE", colour="#A9AB9D") +
     geom_sf(data = historical13, aes(fill=STROKETYPE, color=STROKETYPE), pch=21, stroke =1, alpha=.25) +
@@ -214,7 +215,7 @@ ggplot() +
   #coord_sf() +
   
   coord_sf(xlim = st_coordinates(disp_window)[,'X'], ylim = st_coordinates(disp_window)[,'Y']) +
-  theme(panel.grid.major = element_line(color = gray(0.5), linetype = "dashed", size = 0.5), 
+  theme(panel.grid.major = element_line(color = gray(0.5), linetype = "dashed", linewidth = 0.5), 
         panel.background = element_rect(fill = "#C5D8D7")) +
   theme(plot.margin=unit(c(0,0,0,0), "mm")) + 
   theme(legend.position = "bottom", 
@@ -224,8 +225,10 @@ ggplot() +
 ```
 
 ## Map 2014
-May-September
-```{r}
+
+Lightning May-September *n*=116,352
+
+```{r map2014, echo=FALSE}
 ggplot() +
      geom_sf(data = na1, fill = "#F9F6EE", colour="#A9AB9D") +
     geom_sf(data = historical14, aes(fill=STROKETYPE, color=STROKETYPE), pch=21, stroke =1, alpha=.25) +
@@ -237,7 +240,7 @@ ggplot() +
   #coord_sf() +
   
   coord_sf(xlim = st_coordinates(disp_window)[,'X'], ylim = st_coordinates(disp_window)[,'Y']) +
-  theme(panel.grid.major = element_line(color = gray(0.5), linetype = "dashed", size = 0.5), 
+  theme(panel.grid.major = element_line(color = gray(0.5), linetype = "dashed", linewidth = 0.5), 
         panel.background = element_rect(fill = "#C5D8D7")) +
   theme(plot.margin=unit(c(0,0,0,0), "mm")) + 
   theme(legend.position = "bottom", 
@@ -247,8 +250,10 @@ ggplot() +
 ```
 
 ## Map 2015
-May-September
-```{r}
+
+Lightning May-September *n*=220,140
+
+```{r map2015, echo=FALSE}
 ggplot() +
      geom_sf(data = na1, fill = "#F9F6EE", colour="#A9AB9D") +
     geom_sf(data = historical15, aes(fill=STROKETYPE, color=STROKETYPE), pch=21, stroke =1, alpha=.25) +
@@ -260,7 +265,7 @@ ggplot() +
   #coord_sf() +
   
   coord_sf(xlim = st_coordinates(disp_window)[,'X'], ylim = st_coordinates(disp_window)[,'Y']) +
-  theme(panel.grid.major = element_line(color = gray(0.5), linetype = "dashed", size = 0.5), 
+  theme(panel.grid.major = element_line(color = gray(0.5), linetype = "dashed", linewidth = 0.5), 
         panel.background = element_rect(fill = "#C5D8D7")) +
   theme(plot.margin=unit(c(0,0,0,0), "mm")) + 
   theme(legend.position = "bottom", 
@@ -270,8 +275,10 @@ ggplot() +
 ```
 
 ## Map 2016
-May-September
-```{r}
+
+Lightning May-September *n*=232,625
+
+```{r map2016, echo=FALSE}
 ggplot() +
      geom_sf(data = na1, fill = "#F9F6EE", colour="#A9AB9D") +
     geom_sf(data = historical16, aes(fill=STROKETYPE, color=STROKETYPE), pch=21, stroke =1, alpha=.25) +
@@ -283,7 +290,7 @@ ggplot() +
   #coord_sf() +
   
   coord_sf(xlim = st_coordinates(disp_window)[,'X'], ylim = st_coordinates(disp_window)[,'Y']) +
-  theme(panel.grid.major = element_line(color = gray(0.5), linetype = "dashed", size = 0.5), 
+  theme(panel.grid.major = element_line(color = gray(0.5), linetype = "dashed", linewidth = 0.5), 
         panel.background = element_rect(fill = "#C5D8D7")) +
   theme(plot.margin=unit(c(0,0,0,0), "mm")) + 
   theme(legend.position = "bottom", 
@@ -293,8 +300,10 @@ ggplot() +
 ```
 
 ## Map 2017
-May-September
-```{r}
+
+Lightning May-September *n*=223,934
+
+```{r map2017, echo=FALSE}
 ggplot() +
      geom_sf(data = na1, fill = "#F9F6EE", colour="#A9AB9D") +
     geom_sf(data = historical17, aes(fill=STROKETYPE, color=STROKETYPE), pch=21, stroke =1, alpha=.25) +
@@ -306,7 +315,7 @@ ggplot() +
   #coord_sf() +
   
   coord_sf(xlim = st_coordinates(disp_window)[,'X'], ylim = st_coordinates(disp_window)[,'Y']) +
-  theme(panel.grid.major = element_line(color = gray(0.5), linetype = "dashed", size = 0.5), 
+  theme(panel.grid.major = element_line(color = gray(0.5), linetype = "dashed", linewidth = 0.5), 
         panel.background = element_rect(fill = "#C5D8D7")) +
   theme(plot.margin=unit(c(0,0,0,0), "mm")) + 
   theme(legend.position = "bottom", 
@@ -316,8 +325,10 @@ ggplot() +
 ```
 
 ## Map 2018
-May-September
-```{r}
+
+Lightning May-September *n*=76,987 
+
+```{r map2018, echo=FALSE}
 ggplot() +
      geom_sf(data = na1, fill = "#F9F6EE", colour="#A9AB9D") +
     geom_sf(data = historical18, aes(fill=STROKETYPE, color=STROKETYPE), pch=21, stroke =1, alpha=.25) +
@@ -329,7 +340,7 @@ ggplot() +
   #coord_sf() +
   
   coord_sf(xlim = st_coordinates(disp_window)[,'X'], ylim = st_coordinates(disp_window)[,'Y']) +
-  theme(panel.grid.major = element_line(color = gray(0.5), linetype = "dashed", size = 0.5), 
+  theme(panel.grid.major = element_line(color = gray(0.5), linetype = "dashed", linewidth = 0.5), 
         panel.background = element_rect(fill = "#C5D8D7")) +
   theme(plot.margin=unit(c(0,0,0,0), "mm")) + 
   theme(legend.position = "bottom", 
@@ -339,8 +350,10 @@ ggplot() +
 ```
 
 ## Map 2019
-May-September
-```{r}
+
+Lightning May-September *n*=184,947
+
+```{r map2019, echo=FALSE}
 ggplot() +
      geom_sf(data = na1, fill = "#F9F6EE", colour="#A9AB9D") +
     geom_sf(data = historical19, aes(fill=STROKETYPE, color=STROKETYPE), pch=21, stroke =1, alpha=.25) +
@@ -352,7 +365,7 @@ ggplot() +
   #coord_sf() +
   
   coord_sf(xlim = st_coordinates(disp_window)[,'X'], ylim = st_coordinates(disp_window)[,'Y']) +
-  theme(panel.grid.major = element_line(color = gray(0.5), linetype = "dashed", size = 0.5), 
+  theme(panel.grid.major = element_line(color = gray(0.5), linetype = "dashed", linewidth = 0.5), 
         panel.background = element_rect(fill = "#C5D8D7")) +
   theme(plot.margin=unit(c(0,0,0,0), "mm")) + 
   theme(legend.position = "bottom", 
@@ -362,8 +375,10 @@ ggplot() +
 ```
 
 ## Map 2020
-May-September
-```{r}
+
+Lightning May-September *n*=108,943
+
+```{r map2020, echo=FALSE}
 ggplot() +
      geom_sf(data = na1, fill = "#F9F6EE", colour="#A9AB9D") +
     geom_sf(data = historical20, aes(fill=STROKETYPE, color=STROKETYPE), pch=21, stroke =1, alpha=.25) +
@@ -375,7 +390,7 @@ ggplot() +
   #coord_sf() +
   
   coord_sf(xlim = st_coordinates(disp_window)[,'X'], ylim = st_coordinates(disp_window)[,'Y']) +
-  theme(panel.grid.major = element_line(color = gray(0.5), linetype = "dashed", size = 0.5), 
+  theme(panel.grid.major = element_line(color = gray(0.5), linetype = "dashed", linewidth = 0.5), 
         panel.background = element_rect(fill = "#C5D8D7")) +
   theme(plot.margin=unit(c(0,0,0,0), "mm")) + 
   theme(legend.position = "bottom", 
@@ -385,8 +400,10 @@ ggplot() +
 ```
 
 ## Map 2021
-May-September
-```{r}
+
+Lightning May-September *n*=85,028
+
+```{r map2021, echo=FALSE}
 ggplot() +
      geom_sf(data = na1, fill = "#F9F6EE", colour="#A9AB9D") +
     geom_sf(data = historical21, aes(fill=STROKETYPE, color=STROKETYPE), pch=21, stroke =1, alpha=.25) +
@@ -398,7 +415,7 @@ ggplot() +
   #coord_sf() +
   
   coord_sf(xlim = st_coordinates(disp_window)[,'X'], ylim = st_coordinates(disp_window)[,'Y']) +
-  theme(panel.grid.major = element_line(color = gray(0.5), linetype = "dashed", size = 0.5), 
+  theme(panel.grid.major = element_line(color = gray(0.5), linetype = "dashed", linewidth = 0.5), 
         panel.background = element_rect(fill = "#C5D8D7")) +
   theme(plot.margin=unit(c(0,0,0,0), "mm")) + 
   theme(legend.position = "bottom", 
@@ -408,8 +425,10 @@ ggplot() +
 ```
 
 ## Map 2022
-May-September
-```{r}
+
+Lightning May-September *n*=169,551
+
+```{r map2022, echo=FALSE}
 ggplot() +
      geom_sf(data = na1, fill = "#F9F6EE", colour="#A9AB9D") +
     geom_sf(data = historical22, aes(fill=STROKETYPE, color=STROKETYPE), pch=21, stroke =1, alpha=.25) +
@@ -421,7 +440,7 @@ ggplot() +
   #coord_sf() +
   
   coord_sf(xlim = st_coordinates(disp_window)[,'X'], ylim = st_coordinates(disp_window)[,'Y']) +
-  theme(panel.grid.major = element_line(color = gray(0.5), linetype = "dashed", size = 0.5), 
+  theme(panel.grid.major = element_line(color = gray(0.5), linetype = "dashed", linewidth = 0.5), 
         panel.background = element_rect(fill = "#C5D8D7")) +
   theme(plot.margin=unit(c(0,0,0,0), "mm")) + 
   theme(legend.position = "bottom", 
