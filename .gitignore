@@ -52,7 +52,7 @@ rsconnect/
 # For Mac users computer specific files
 **/.DS_Store
 #**/._.DS_Store
-#**/scripts/._FiguresPredictedvsMeasured.Rmd
+**/scripts/._LightningExploreData.html
 **/._FiSL-Data-Production.Rproj
 
 # exclude specific folders from push to github
