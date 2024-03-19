@@ -146,6 +146,11 @@ na1 = st_transform(na, crs=ecozoneProjection)
 historical3 = st_transform(historical2, crs=ecozoneProjection)
 ```
 
+## write to shapefile
+```{r eval=FALSE, include=FALSE}
+st_write(historical3, "../outputs/spatialDataCreate/HistoricalLightning13_22.shp", driver="ESRI Shapefile")
+```
+
 # FIlter Historical by summer month and years
 ```{r}
 historical13 = historical3 %>% filter(year==2013) %>% filter(month %in% c(5, 6, 7, 8, 9))
