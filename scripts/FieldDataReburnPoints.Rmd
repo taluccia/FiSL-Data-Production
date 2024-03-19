@@ -1,0 +1,121 @@
+---
+title: "Field Data Reburn points"
+author: "Anna Talucci"
+date: "2024-03-18"
+output: html_document
+---
+
+# Overview
+Organize field data to select for burn_depth and recent burns from 2016 to present. The goal is to pair these sites with SAR data.
+
+Field data provided by Xanthe Walker from FiSL and Legacy Carbon Project. 
+
+# Packages
+```{r}
+library(tidyverse)
+library(sf)
+```
+
+# Data
+```{r}
+lcsites = read_csv("../data/fieldCsv/LC_SITES_11142023.csv")
+lcdata = read_csv("../data/fieldCsv/LC_Data_09052023.csv")
+fd = read_csv("../data/fieldCsv/FiSL_sitedata_BB2023.csv")
+fp = read_csv("../data/fieldCsv/FINAL_PLOTS_01142024.csv")
+```
+
+```{r}
+lcsites
+lcdata
+fp
+```
+
+above ground combustion trees + shrubs + cwd
+below ground 
+
+```{r}
+fp %>% filter(unique_site_id.x==117 | unique_site_id.x ==174)
+```
+# Filter Data for years of interest
+
+## For final plot data
+Notes: 
+- Projection/Datum NAD83
+- by select only fire from 2016 on we only loos 96 sites
+- burn_depth has 197 NA
+
+```{r}
+fp[is.na(fp$burn_depth),]
+```
+```{r}
+( fp1 = fp %>% 
+    dplyr::select(unique_site_id.x, date.x, official_fire_scar, site, latitude, longitude, moisture_class, moisture_numeric, recent_burn, second_burn, triple_burn, reburn_age, reburn_class, prefire.trees:burn_depth) %>%
+    rename(siteID = unique_site_id.x, date=date.x) %>%
+    filter(recent_burn >=2016) %>%
+    drop_na(burn_depth)
+  )
+```
+
+## Reburn sites
+```{r}
+reburn = fp %>% 
+    dplyr::select(unique_site_id.x, date.x, official_fire_scar, site, latitude, longitude, moisture_class, moisture_numeric, recent_burn, second_burn, triple_burn, reburn_age, reburn_class, prefire.trees:burn_depth) %>%
+    rename(siteID = unique_site_id.x, date=date.x) %>%
+  drop_na(second_burn)
+```
+
+```{r}
+unique(sort(reburn$recent_burn))
+```
+## For Legacy Carbon (LC) data
+Notes: 
+- Projection/Datum NAD83 
+- by select only fire from 2016 on we only loos 96 sites
+- burn_depth has 58 NA
+```{r}
+lcdata
+```
+```{r}
+lcdata[is.na(lcdata$Burn_Depth),]
+```
+```{r}
+( lc1 = lcdata %>% 
+    dplyr::select(Site_Name, Sampling_Date, Year_of_Burn, Latitude, Longitude, Moisture_Class,  SOL_depth, Burn_Depth) %>%
+    rename(burn_depth = Burn_Depth, date=Sampling_Date, recent_burn=Year_of_Burn, latitude=Latitude, longitude=Longitude,) %>%
+    filter(recent_burn >=2016) %>%
+    drop_na(burn_depth) %>%
+  drop_na(latitude)
+  )
+```
+
+
+# To point shp
+```{r}
+fp1_pts = st_as_sf(fp1, coords = c("longitude","latitude"), crs = 4269, remove = FALSE)
+```
+
+```{r}
+lc1_pts = st_as_sf(lc1, coords = c("longitude","latitude"), crs = 4269, remove = FALSE)
+```
+
+```{r}
+reburn_pts = st_as_sf(reburn, coords = c("longitude","latitude"), crs = 4269, remove = FALSE)
+```
+# Reproject to WSG 84 
+4326
+```{r}
+reburn4326 = st_transform(reburn_pts, crs=4326)
+```
+
+### write to shapefile
+```{r eval=FALSE, include=FALSE}
+st_write(fp1_pts, "../outputs/fieldData/FiSLBurnDepth.shp", driver="ESRI Shapefile")
+```
+
+```{r eval=FALSE, include=FALSE}
+st_write(reburn4326, "../outputs/spatialDataCreate/fieldData/FiSLReburn4326.shp", driver="ESRI Shapefile")
+```
+
+```{r eval=FALSE, include=FALSE}
+st_write(lc1_pts, "../outputs/fieldData/LcBurnDepth.shp", driver="ESRI Shapefile")
+```

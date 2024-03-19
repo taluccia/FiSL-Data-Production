@@ -1,0 +1,42 @@
+---
+title: "Compare GLD to AK data"
+author: "Anna Talucci"
+date: "2024-03-14"
+output: html_document
+---
+
+# Overview
+
+Use fishnet to compare AK Lightning data to GLD lightning data.
+
+
+# Data
+
+```{r}
+eco = st_read("../data/spatialData/dire_ecoregs_caea/dire_ecoregs_caea.shp", "dire_ecoregs_caea")
+```
+
+```{r}
+akLightning
+```
+
+```{r}
+gld
+```
+
+
+
+## Get Eco Projection
+
+```{r}
+st_crs(eco)
+( ecozoneProjection = st_crs(eco)$proj4string )
+```
+
+## Reproject
+
+```{r}
+ls24 = st_transform(shp, crs=ecozoneProjection)
+na1 = st_transform(na, crs=ecozoneProjection)
+historical3 = st_transform(historical2, crs=ecozoneProjection)
+```
