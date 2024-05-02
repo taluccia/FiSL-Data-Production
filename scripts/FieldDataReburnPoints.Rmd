@@ -58,10 +58,11 @@ fp[is.na(fp$burn_depth),]
 
 ## Reburn sites
 ```{r}
-reburn = fp %>% 
+( reburn = fp %>% 
     dplyr::select(unique_site_id.x, date.x, official_fire_scar, site, latitude, longitude, moisture_class, moisture_numeric, recent_burn, second_burn, triple_burn, reburn_age, reburn_class, prefire.trees:burn_depth) %>%
     rename(siteID = unique_site_id.x, date=date.x) %>%
   drop_na(second_burn)
+)
 ```
 
 ```{r}
