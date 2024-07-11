@@ -45,6 +45,18 @@ f <- list.files(path = "../data/lightningData/GLD/",
 f
 ```
 
+```{r}
+( list2016 = f[c(1:12)] )
+( list2017 = f[c(13:24)] )
+( list2018 = f[c(25:36)] )
+( list2019 = f[c(37:48)] )
+( list2020 = f[c(49:60)] )
+( list2021 = f[c(61:72)] )
+( list2022 = f[c(73:84)] )
+
+```
+
+
 ## Get Eco Projection
 
 ```{r}
@@ -56,27 +68,39 @@ st_crs(eco)
 
 # Functions
 
-## Function to read in dataframe
-
-
-## Function to clean
-# Function to clean
-
-df %>%
-   separate(elements, into = c('element1', 'element2'),
-          sep = '\\s*and\\s*')
+## Read into DF and Clean
 
 ```{r}
 clean <- function(df){ 
   df %>% 
-    mutate(eventDate = substr(time,1,10)) %>% 
-    mutate(eventTime = substr(time,12,23)) %>%
-    mutate(eventDate = ymd(eventDate)) %>%
-    mutate(year = lubridate::year(eventDate), 
-                month = lubridate::month(eventDate), 
-                day = lubridate::day(eventDate)) 
+    map_dfr(read_csv) %>% 
+  separate(time, c("date", "time"), sep = " ") %>%  
+  mutate(date = ymd(date)) %>%
+  dplyr::mutate(year = lubridate::year(date), 
+                month = lubridate::month(date), 
+                day = lubridate::day(date)) %>%
+    filter(month %in% c(4,5,6,7, 8, 9, 10)) %>%
+    filter(cloud=="FALSE") %>%
+    select(date:latitude, year:day)
+  
 }
+```
 
+
+```{r}
+( df2016 = list2016 %>% clean() )
+( df2017 = list2017 %>% clean() )
+( df2018 = list2018 %>% clean() )
+( df2021 = list2021 %>% clean() )
+( df2022 = list2022 %>% clean() )
+```
+
+```{r}
+combine = bind_rows(df2016, df2017, df2018, df2021, df2022)
+```
+
+```{r}
+combine
 ```
 
 ## Function to make points
@@ -87,203 +111,20 @@ df_to_sf <- function(x){
 }
 ```
 
-
-
-
-
-# View data frames
-
-## 2016
-f1 = read.csv(f[1], header = TRUE) #january
-f2 = read.csv(f[2], header = TRUE) #february
-f3 = read.csv(f[3], header = TRUE) #march
-f3 = read.csv(f[3], header = TRUE) #march
-```{r}
-f5 = read.csv(f[5], header = TRUE) # may
-f6 = read.csv(f[6], header = TRUE) # june
-f7 = read.csv(f[7], header = TRUE) # july
-f8 = read.csv(f[8], header = TRUE) # August
-f9 = read.csv(f[9], header = TRUE) # september
-```
-
-f10 = read.csv(f[10], header = TRUE) #october
-f11 = read.csv(f[11], header = TRUE) #november
-f12 = read.csv(f[12], header = TRUE) #december
+## to point
 
 ```{r}
-mayToSept2016 = bind_rows(f5, f6, f7, f8, f9)
+( gldpts = combine %>% df_to_sf() )
 ```
 
-```{r}
-( clean2016 = clean(mayToSept2016) )
-```
-
-## Clean to point
-```{r}
-( gld2016 = clean2016 %>% df_to_sf() )
-```
 ## Reproject To Project Projection
 
 ```{r}
-gld2016EcoProj = st_transform(gld2016, crs=ecozoneProjection)
+gldEcoProj = st_transform(gldpts, crs=ecozoneProjection)
 ```
 
-## Write to shapefile
+## write to shapefile
 
-```{r}
-f1 %>% mutate(eventDate = substr(time,1,10))%>% mutate(eventTime = substr(time,12,23))
+```{r eval=FALSE, include=FALSE}
+st_write(gldEcoProj, "../outputs/spatialDataCreate/GLD16_18_21_22.shp", driver="ESRI Shapefile")
 ```
-```{r}
-( clean_f1 = clean(f1) )
-```
-
-
-## 2017
-
-```{r}
-read.csv(f[13], header = TRUE) 
-read.csv(f[14], header = TRUE) 
-read.csv(f[15], header = TRUE) 
-read.csv(f[16], header = TRUE) 
-read.csv(f[17], header = TRUE) 
-read.csv(f[18], header = TRUE) 
-```
-
-```{r}
-read.csv(f[19], header = TRUE) 
-read.csv(f[20], header = TRUE) 
-read.csv(f[21], header = TRUE) 
-read.csv(f[22], header = TRUE) 
-read.csv(f[23], header = TRUE) 
-read.csv(f[24], header = TRUE) 
-```
-
-## 2018
-
-```{r}
-read.csv(f[25], header = TRUE) 
-read.csv(f[26], header = TRUE) 
-read.csv(f[27], header = TRUE) 
-read.csv(f[28], header = TRUE) 
-read.csv(f[29], header = TRUE) 
-read.csv(f[30], header = TRUE) 
-```
-
-```{r}
-read.csv(f[31], header = TRUE) 
-read.csv(f[32], header = TRUE) 
-read.csv(f[33], header = TRUE) 
-read.csv(f[34], header = TRUE) 
-read.csv(f[35], header = TRUE) 
-read.csv(f[36], header = TRUE) 
-```
-
-## 2019
-
-```{r}
-read.csv(f[37], header = TRUE) 
-read.csv(f[38], header = TRUE) # No data??
-read.csv(f[39], header = TRUE) 
-read.csv(f[40], header = TRUE) 
-read.csv(f[41], header = TRUE) 
-read.csv(f[42], header = TRUE) 
-```
-
-```{r}
-read.csv(f[43], header = TRUE) 
-read.csv(f[44], header = TRUE) 
-read.csv(f[45], header = TRUE) 
-read.csv(f[46], header = TRUE) 
-read.csv(f[47], header = TRUE) 
-read.csv(f[48], header = TRUE) 
-```
-
-## 2020
-
-```{r}
-read.csv(f[49], header = TRUE) 
-read.csv(f[50], header = TRUE) 
-read.csv(f[51], header = TRUE) # march 2 data points
-read.csv(f[52], header = TRUE) # april no data?
-read.csv(f[53], header = TRUE) 
-read.csv(f[54], header = TRUE) 
-```
-
-```{r}
-read.csv(f[55], header = TRUE) 
-read.csv(f[56], header = TRUE) 
-read.csv(f[57], header = TRUE) 
-read.csv(f[58], header = TRUE) 
-read.csv(f[59], header = TRUE) 
-read.csv(f[60], header = TRUE) 
-```
-
-## 2021
-
-```{r}
-read.csv(f[61], header = TRUE) 
-read.csv(f[62], header = TRUE) 
-read.csv(f[63], header = TRUE) 
-read.csv(f[64], header = TRUE) 
-read.csv(f[65], header = TRUE) 
-read.csv(f[66], header = TRUE) 
-```
-
-```{r}
-read.csv(f[67], header = TRUE) 
-read.csv(f[68], header = TRUE) 
-read.csv(f[69], header = TRUE) 
-read.csv(f[70], header = TRUE) 
-read.csv(f[71], header = TRUE) 
-read.csv(f[72], header = TRUE) 
-```
-
-## 2022
-
-```{r}
-read.csv(f[73], header = TRUE) 
-read.csv(f[74], header = TRUE) 
-read.csv(f[75], header = TRUE) 
-read.csv(f[76], header = TRUE) 
-read.csv(f[77], header = TRUE) 
-read.csv(f[78], header = TRUE) 
-```
-
-```{r}
-read.csv(f[79], header = TRUE) 
-read.csv(f[80], header = TRUE) 
-read.csv(f[81], header = TRUE) 
-read.csv(f[82], header = TRUE) 
-read.csv(f[83], header = TRUE) 
-read.csv(f[84], header = TRUE) 
-```
-```{r}
-names(read.csv(f[1], header = TRUE) )
-names(read.csv(f[84], header = TRUE) )
-```
-# Combine into a single dataframe
-```{r}
-listToDf <- purrr::map(f,
-function(file){
-df <- read.csv(file)
-
-current_names <- names(df)
-
-# find what names are missing
-# do mutate(missing_names = NA)
-
-return(df)
-}
-)
-```
-
-```{r}
-gldDf = bind_rows(listToDf) 
-```
-
-```{r}
-head(gldDf)
-```
-
-
-# Split Date time column into two

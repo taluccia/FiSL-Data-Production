@@ -1,6 +1,17 @@
 # FiSL-Data-Production
 
 
+
+
+
+
+
+# canada lightning data
+
+https://eccc-msc.github.io/open-data/msc-data/lightning/readme_lightning-datamart_en/
+
+https://dd.weather.gc.ca/lightning/
+
 # GLD Lightning data
 
 Each lightning event found within your specified query returns with the following output:

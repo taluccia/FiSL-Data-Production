@@ -128,7 +128,7 @@ st_write(historical2, "../outputs/spatialDataCreate/HistoricalLightning.shp", dr
 ```
 
 # Change projections
-roads <- st_transform(roads, crs = 4326)
+
 EPSG:3338
 
 ## Get Eco Projection

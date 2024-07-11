@@ -17,26 +17,63 @@ eco = st_read("../data/spatialData/dire_ecoregs_caea/dire_ecoregs_caea.shp", "di
 ```
 
 ```{r}
-akLightning
+ak = st_read("../outputs/spatialDataCreate/AkLightning_13_23_shp/AkLightning13_23.shp", "AkLightning13_23")
 ```
 
 ```{r}
+gld = st_read("../outputs/spatialDataCreate/GLD16_18_21_22.shp", "GLD16_18_21_22")
+```
+# look at df
+
+```{r}
+ak
 gld
 ```
 
-
-
-## Get Eco Projection
+# Subset AK to match GLD Years
 
 ```{r}
-st_crs(eco)
-( ecozoneProjection = st_crs(eco)$proj4string )
+ak1 = ak %>% filter(year %in% c(2016, 2017, 2018, 2021, 2022))
 ```
 
-## Reproject
+# Intersect
 
 ```{r}
-ls24 = st_transform(shp, crs=ecozoneProjection)
-na1 = st_transform(na, crs=ecozoneProjection)
-historical3 = st_transform(historical2, crs=ecozoneProjection)
+joinEcoAK = st_join(ak1, eco, largest=TRUE)
+```
+
+```{r}
+joinEcoGLD = st_join(gld, eco, largest=TRUE)
+```
+
+# look at intersect
+
+```{r}
+ak_count = joinEcoAK %>% 
+  drop_na(NA_L2NAME) %>%
+  st_drop_geometry() %>%
+  group_by(year, NA_L2NAME) %>%
+  summarise(countAK = n())
+```
+
+```{r}
+gld_count = joinEcoGLD %>% 
+  drop_na(NA_L2NAME) %>%
+  st_drop_geometry() %>%
+  group_by(year, NA_L2NAME) %>%
+  summarise(countGLD = n())
+```
+
+# Join summary DF
+
+```{r}
+( summaryJoin = ak_count %>% 
+  full_join(gld_count, by=c("year", "NA_L2NAME")) %>% 
+  mutate(ratioAK_GLD = round((countAK/countGLD), 3)) %>%
+  mutate(ratioGLD_AK = round((countGLD/countAK), 3))  
+)
+```
+
+```{r}
+write_csv(summaryJoin ,"../outputs/CompareCountsAkGld.csv")
 ```
