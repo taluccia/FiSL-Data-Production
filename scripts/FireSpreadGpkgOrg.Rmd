@@ -1,0 +1,61 @@
+---
+title: "Fire Spread geo package organize"
+author: "Anna Talucci"
+date: "2024-07-03"
+output: html_document
+---
+
+# Overview
+
+Explore Scholten Fire Atlas with spread [site](https://surfdrive.surf.nl/files/index.php/s/Fgx43wTv8g7Al39?path=%2F).
+
+
+
+**THIS SCRIPT**
+Subset data for Jeremy and combine data for Jeremy
+
+# Packages
+
+```{r}
+library(tidyverse)
+library(sf)
+library(lubridate)
+```
+
+# Data
+
+```{r}
+eco = st_read("../data/spatialData/dire_ecoregs_caea/dire_ecoregs_caea.shp", "dire_ecoregs_caea")
+```
+
+```{r}
+# read in layers to environment, suppress messages with quiet=TRUE
+final_virrs <- st_read(dsn =  "../data/Summary/final_viirs2019.gpkg")
+```
+
+```{r}
+# read in layers to environment, suppress messages with quiet=TRUE
+am2019 <- st_read(dsn =  "../data/Snapshot/20190731AM_FL.gpkg")
+```
+
+```{r}
+# read in layers to environment, suppress messages with quiet=TRUE
+pm2019 <- st_read(dsn =  "../data/Snapshot/20190731PM_FL.gpkg")
+```
+
+# look at data
+
+```{r}
+final_virrs
+am2019 
+pm2019 
+```
+
+# Plots
+```{r}
+plot(st_geometry(final_virrs))
+```
+
+```{r}
+plot(st_geometry(pm2019))
+```
