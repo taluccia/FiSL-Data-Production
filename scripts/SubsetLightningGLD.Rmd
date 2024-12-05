@@ -1,0 +1,241 @@
+---
+title: "AK Lightning Data"
+author: "Anna Talucci"
+date: "2024-07-03"
+output: html_document
+---
+```{r clearEnvironment, include=FALSE}
+rm(list=ls())
+```
+
+# Overview
+
+Explore Alaska Lightning data. Data for download within the zipped files on the [site](https://fire.ak.blm.gov/predsvcs/maps.php).
+
+Lightning data to be used by Xanthe to evaluate wildfire probability. 
+
+Notes:
+-- Temporal period: 2013 to 2022
+-- Spatial domain: Ecoregions of AK boreal interior, boreal cordillera, taiga plains, and taiga shield.
+-- Lightning : yes I think we want it as precise as possible.  However, in the proposal we outlined a subsampling plan where we get this data for 100 blocks/ecoregion stratified by fire occurrence (1 block ~ 50,000 ha). I am open to a different approach but maybe we don't need lightning across the entire spatial domain?
+-- 30m = yes
+-- coordinate system = Canada Albers Equal Area Conic projection (ESRI:102001)
+
+Notes on Lightning Data
+-- Data have been clipped to show only those strikes that fall within 250 km of Alaska, Yukon Territory, British Columbia, and Northwest Territories
+
+**THIS SCRIPT**
+Subset data for Jeremy.
+
+# Packages
+
+```{r}
+library(tidyverse)
+library(sf)
+library(lubridate)
+```
+
+# Data
+
+```{r}
+eco = st_read("../outputs/spatialDataCreate/geopackage/EcozoneBuffered.gpkg")
+```
+
+```{r eval=FALSE, include=FALSE}
+gld2012_2015 = st_read("../outputs/spatialDataCreate/geopackage/GLD360_2012_2015_20241127.gpkg")
+```
+
+
+```{r eval=FALSE, include=FALSE}
+gld2016_2022 = st_read("../outputs/spatialDataCreate/geopackage/GLD_2016_2022_20241127.gpkg")
+```
+## Individual years
+```{r}
+gld2012 = st_read("../outputs/spatialDataCreate/geopackage/gldByYear/GLD2012.gpkg")
+
+gld2013 = st_read("../outputs/spatialDataCreate/geopackage/gldByYear/GLD2013.gpkg")
+
+gld2014 = st_read("../outputs/spatialDataCreate/geopackage/gldByYear/GLD2014.gpkg")
+```
+
+```{r}
+gld2015 = st_read("../outputs/spatialDataCreate/geopackage/gldByYear/GLD2015.gpkg")
+```
+
+
+## World map
+https://datacatalog.worldbank.org/dataset/world-bank-official-boundaries
+
+```{r}
+wrld = st_read("../data/spatialData/world/WB_countries_Admin0_10m.shp", "WB_countries_Admin0_10m")
+```
+
+# Dataframes
+
+```{r eval=FALSE, include=FALSE}
+gld2012_2015
+```
+
+```{r eval=FALSE, include=FALSE}
+gld2016_2022
+```
+
+# Intersect
+
+```{r eval=FALSE, include=FALSE}
+join2012_2015 = st_join(gld2012_2015, eco, largest=TRUE) %>% drop_na(NA_L2NAME)
+```
+
+```{r eval=FALSE, include=FALSE}
+join2016_2022 = st_join(gld2016_2022, eco, largest=TRUE) %>% drop_na(NA_L2NAME)
+```
+
+## Individual Years
+
+```{r}
+join2012 = st_join(gld2012, eco, largest=TRUE) %>% drop_na(NA_L2NAME)
+join2013 = st_join(gld2013, eco, largest=TRUE) %>% drop_na(NA_L2NAME)
+join2014 = st_join(gld2014, eco, largest=TRUE) %>% drop_na(NA_L2NAME)
+join2015 = st_join(gld2015, eco, largest=TRUE) %>% drop_na(NA_L2NAME)
+```
+
+# Check Data
+
+```{r eval=FALSE, include=FALSE}
+join2012_2015
+join2016_2022
+```
+
+```{r eval=FALSE, include=FALSE}
+min(join2012_2015$year)
+max(join2012_2015$year)
+min(join2016_2022$year)
+max(join2016_2022$year)
+```
+# Remove AK Data
+
+```{r eval=FALSE, include=FALSE}
+head(join2012_2015)
+unique(join2012_2015$NA_L2NAME)
+```
+
+# Join and Select for Canada
+
+## Subset for North America 
+
+```{r}
+na = wrld %>% filter(FORMAL_EN %in% c("Canada", "United States of America"))
+```
+
+
+
+## Define Projection
+
+```{r}
+st_crs(eco)
+( ecozoneProjection = st_crs(eco)$proj4string )
+```
+
+## Reproject
+
+```{r}
+na1 = st_transform(na, crs=ecozoneProjection)
+```
+
+```{r}
+na1
+```
+
+## Join to NA to Assign Country and select for Canada
+
+```{r eval=FALSE, include=FALSE}
+canada_2012_2015 = st_join(join2012_2015, na1, largest=TRUE) %>% filter(FORMAL_EN == "Canada")
+```
+
+```{r eval=FALSE, include=FALSE}
+canada_2016_2022 = st_join(join2016_2022, na1, largest=TRUE) %>% filter(FORMAL_EN == "Canada")
+```
+
+## individual years
+
+```{r}
+canada_2012 = st_join(join2012, na1, largest=TRUE) %>% filter(FORMAL_EN == "Canada")
+
+canada_2013 = st_join(join2013, na1, largest=TRUE) %>% filter(FORMAL_EN == "Canada")
+
+canada_2014 = st_join(join2014, na1, largest=TRUE) %>% filter(FORMAL_EN == "Canada")
+
+canada_2015 = st_join(join2015, na1, largest=TRUE) %>% filter(FORMAL_EN == "Canada")
+```
+
+
+## drop geometry
+
+```{r eval=FALSE, include=FALSE}
+( canada_2012_2015_csv = canada_2012_2015 %>% st_drop_geometry() )
+```
+
+```{r eval=FALSE, include=FALSE}
+( canada_2016_2022_csv =canada_2016_2022 %>% st_drop_geometry() )
+```
+
+## By year
+```{r}
+canada_2012_csv = canada_2012 %>% st_drop_geometry() 
+canada_2013_csv = canada_2013 %>% st_drop_geometry() 
+canada_2014_csv = canada_2014 %>% st_drop_geometry() 
+canada_2015_csv = canada_2015 %>% st_drop_geometry() 
+```
+
+# Save 
+
+```{r}
+st_write(canada_2012, dsn= "../outputs/spatialDataCreate/geopackage/GLD_Above_2012.gpkg", layer='lightning')
+```
+
+```{r}
+st_write(canada_2013, dsn= "../outputs/spatialDataCreate/geopackage/GLD_Above_2013.gpkg", layer='lightning')
+```
+
+```{r}
+st_write(canada_2014, dsn= "../outputs/spatialDataCreate/geopackage/GLD_Above_2014.gpkg", layer='lightning')
+```
+
+```{r}
+st_write(canada_2015, dsn= "../outputs/spatialDataCreate/geopackage/GLD_Above_2015.gpkg", layer='lightning')
+```
+
+```{r}
+write_csv(canada_2012_csv,"../outputs/spatialDataCreate/csv/GLD_Above_2012.csv")
+```
+
+```{r}
+write_csv(canada_2013_csv,"../outputs/spatialDataCreate/csv/GLD_Above_2013.csv")
+```
+
+```{r}
+write_csv(canada_2014_csv,"../outputs/spatialDataCreate/csv/GLD_Above_2014.csv")
+```
+
+```{r}
+write_csv(canada_2015_csv,"../outputs/spatialDataCreate/csv/GLD_Above_2015.csv")
+```
+
+
+
+```{r eval=FALSE, include=FALSE}
+st_write(canada_2012_2015, dsn= "../outputs/spatialDataCreate/geopackage/GLD_Above_2012_2015_20241129.gpkg", layer='lightning')
+```
+
+```{r eval=FALSE, include=FALSE}
+st_write(canada_2016_2022, dsn= "../outputs/spatialDataCreate/geopackage/GLD_Above_2016_2022_20241129.gpkg", layer='lightning')
+```
+
+
+```{r eval=FALSE, include=FALSE}
+write_csv(canada_2012_2015_csv,"../outputs/spatialDataCreate/csv/GLD_Above_2012_2015_20241129.csv")
+```
+
+```{r eval=FALSE, include=FALSE}
+write_csv(canada_2016_2022_csv,"../outputs/spatialDataCreate/csv/GLD_Above_2016_2022_20241129.csv")
+```

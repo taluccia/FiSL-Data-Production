@@ -1,0 +1,48 @@
+---
+title: "Buffer ABoVe ecozone boundaries"
+author: "Anna Talucci"
+date: "2024-09-05"
+output: html_document
+---
+```{r clearEnvironment, include=FALSE}
+rm(list=ls())
+```
+
+# Overview 
+
+Buffer Ecozones to remove holes in the middle of polygon. Buffered output used with Lightning data.
+
+# Packages
+
+```{r}
+library(tidyverse)
+library(sf)
+library(lubridate)
+```
+
+# Data
+
+```{r}
+eco = st_read("../data/spatialData/dire_ecoregs_caea/dire_ecoregs_caea.shp", "dire_ecoregs_caea")
+```
+```{r}
+plot(st_geometry(eco))
+```
+
+# Select Points in ecozone polygons
+
+```{r}
+ecoBuff = st_buffer(eco, dist = 50000, endCapStyle="ROUND")
+```
+
+```{r}
+ecoBuff1 = st_buffer(ecoBuff, dist = -40000, endCapStyle="ROUND")
+```
+
+```{r}
+plot(st_geometry(ecoBuff1))
+```
+
+```{r}
+st_write(ecoBuff1, dsn= "../outputs/spatialDataCreate/geopackage/EcozoneBuffered.gpkg")
+```

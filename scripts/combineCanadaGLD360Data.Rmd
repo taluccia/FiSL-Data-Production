@@ -1,0 +1,121 @@
+---
+title: "Combine GLD Data"
+author: "Anna Talucci"
+date: "2024-12-04"
+output: html_document
+---
+
+```{r clearEnvironment, include=FALSE}
+rm(list=ls())
+```
+
+# Packages
+
+```{r}
+library(tidyverse)
+library(sf)
+library(lubridate)
+```
+
+
+```{r}
+csv2012 = read_csv("../outputs/spatialDataCreate/csv/GLD_Above_2012.csv")
+```
+
+```{r}
+csv2013 = read_csv("../outputs/spatialDataCreate/csv/GLD_Above_2013.csv")
+```
+
+```{r}
+csv2014 = read_csv("../outputs/spatialDataCreate/csv/GLD_Above_2014.csv")
+```
+
+```{r}
+csv2015 = read_csv("../outputs/spatialDataCreate/csv/GLD_Above_2015.csv")
+```
+
+
+
+# view Data
+
+```{r}
+csv2012
+csv2013
+csv2014
+csv2015
+```
+
+# Combine into single dataframe
+
+```{r}
+combine_csv = bind_rows(csv2012, csv2013, csv2014, csv2015)
+```
+
+
+```{r}
+combine_csv
+```
+
+````{r}
+quantile(combine_csv$year)
+```
+
+````{r}
+combine_csv %>% group_by(year, NA_L2NAME) %>% summarize(n=n())
+```
+
+
+## Save csv
+
+```{r eval=FALSE, include=FALSE}
+write_csv(combine_csv,"../outputs/spatialDataCreate/csv/GLD_Above_2012_2015_20241205.csv")
+```
+
+# geopackages
+
+## data
+```{r}
+geo2012 = st_read("../outputs/spatialDataCreate/geopackage/GLD_Above_2012.gpkg")
+```
+
+```{r}
+geo2013 = st_read("../outputs/spatialDataCreate/geopackage/GLD_Above_2013.gpkg")
+```
+
+```{r}
+geo2014 = st_read("../outputs/spatialDataCreate/geopackage/GLD_Above_2014.gpkg")
+```
+
+```{r}
+geo2015 = st_read("../outputs/spatialDataCreate/geopackage/GLD_Above_2015.gpkg")
+```
+
+## View Data
+
+```{r}
+geo2012
+geo2013
+geo2014
+geo2015
+```
+
+## Combine data
+
+```{r}
+geo_combine = bind_rows(geo2012, geo2013, geo2014, geo2015)
+```
+
+
+```{r}
+geo_combine
+```
+
+````{r}
+quantile(geo_combine$year)
+```
+
+## Save as Geopackage
+
+```{r eval=FALSE, include=FALSE}
+st_write(geo_combine, dsn= "../outputs/spatialDataCreate/geopackage/GLD_Above_2012_2015_20241205.gpkg", layer='lightning')
+```

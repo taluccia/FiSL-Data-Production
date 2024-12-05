@@ -1,0 +1,279 @@
+---
+title: "AK Lightning Data"
+author: "Anna Talucci"
+date: "2024-07-03"
+output: html_document
+---
+
+
+# Overview
+
+Explore Alaska Lightning data. Data for download within the zipped files on the [site](https://fire.ak.blm.gov/predsvcs/maps.php).
+
+Lightning data to be used by Xanthe to evaluate wildfire probability. 
+
+Notes:
+-- Temporal period: 2013 to 2022
+-- Spatial domain: Ecoregions of AK boreal interior, boreal cordillera, taiga plains, and taiga shield.
+-- Lightning : yes I think we want it as precise as possible.  However, in the proposal we outlined a subsampling plan where we get this data for 100 blocks/ecoregion stratified by fire occurrence (1 block ~ 50,000 ha). I am open to a different approach but maybe we don't need lightning across the entire spatial domain?
+-- 30m = yes
+-- coordinate system = Canada Albers Equal Area Conic projection (ESRI:102001)
+
+Notes on Lightning Data
+-- Data have been clipped to show only those strikes that fall within 250 km of Alaska, Yukon Territory, British Columbia, and Northwest Territories
+
+**THIS SCRIPT**
+Subset data for Jeremy.
+
+# Packages
+
+```{r}
+library(tidyverse)
+library(sf)
+library(lubridate)
+```
+
+# Data
+
+```{r}
+eco = st_read("../data/spatialData/dire_ecoregs_caea/dire_ecoregs_caea.shp", "dire_ecoregs_caea")
+```
+```{r}
+plot(st_geometry(eco))
+```
+
+```{r}
+shp = st_read("../data/lightningData/CurrentYearLightning_SHP/TOA_STRIKES.shp", "TOA_STRIKES")
+```
+
+```{r}
+txt = read_csv("../data/lightningData/CurrentYearLightning_TXT/TOA_STRIKES.txt")
+```
+```{r}
+historical = read_csv("../data/lightningData/Historical_Lightning_as_txt/Historical_Lightning_2012_2023_TOA_AlaskaAlbersNAD83.txt")
+```
+```{r}
+usa = st_read("../data/lightningData/cb_2018_us_state_20m/cb_2018_us_state_20m.shp", "cb_2018_us_state_20m")
+```
+
+## World map
+https://datacatalog.worldbank.org/dataset/world-bank-official-boundaries
+
+```{r}
+wrld = st_read("../data/spatialData/world/WB_countries_Admin0_10m.shp", "WB_countries_Admin0_10m")
+```
+
+# Dataframes
+
+```{r}
+eco
+```
+
+```{r}
+shp
+```
+
+```{r}
+txt
+```
+
+```{r}
+historical
+```
+
+```{r}
+usa
+```
+
+```{r}
+na = wrld %>% filter(FORMAL_EN %in% c("Canada", "United States of America"))
+```
+
+# Explore types of data
+```{r}
+unique(historical$STROKETYPE)
+unique(historical$POLARITY)
+```
+
+
+
+# Split Date time column into two
+
+```{r}
+( historical1 = historical %>% 
+  separate(LOCALDATETIME, into = c("LocalDate", "LocalTime"), sep = " (?=[^ ]+$)", remove = FALSE) %>%
+  mutate(LocalDate = mdy(LocalDate)) %>%
+  dplyr::mutate(year = lubridate::year(LocalDate), 
+                month = lubridate::month(LocalDate), 
+                day = lubridate::day(LocalDate)) %>%
+  filter(month %in% c(4, 5, 6, 7, 8, 9, 10)) %>%
+    filter(STROKETYPE == "GROUND_STROKE")
+)
+```
+
+```{r}
+unique(historical1$year)
+```
+
+
+# Create points shapefile for Historic Lightning
+
+## Function to make points
+```{r}
+df_to_sf <- function(x){
+  st_as_sf(x, coords = c("LONGITUDE","LATITUDE"), crs = 4326, remove = FALSE)
+}
+```
+
+## Drop Lat Lon NA and convert to shapefile 
+```{r}
+( historical2 = historical1 %>% df_to_sf() )
+```
+
+
+## Change projection
+
+EPSG:3338
+
+### Get Eco Projection
+
+```{r}
+st_crs(eco)
+( ecozoneProjection = st_crs(eco)$proj4string )
+```
+
+## Reproject
+
+```{r}
+na1 = st_transform(na, crs=ecozoneProjection)
+historical3 = st_transform(historical2, crs=ecozoneProjection)
+```
+
+# Select Points in ecozone polygons
+
+```{r}
+ecoBuff = st_buffer(eco, dist = 50000, endCapStyle="ROUND")
+```
+
+```{r}
+ecoBuff1 = st_buffer(ecoBuff, dist = -40000, endCapStyle="ROUND")
+```
+
+```{r}
+plot(st_geometry(ecoBuff1))
+```
+
+# Intersect
+```{r}
+joinEcoLightning = st_join(historical3 , ecoBuff1, largest=TRUE)
+```
+
+```{r}
+( joinSelect = joinEcoLightning %>% 
+    drop_na(NA_L2NAME) %>%
+  select(OID_:geometry)
+)
+  
+```
+```{r}
+min(joinSelect$year)
+max(joinSelect$year)
+```
+## Join and select for US Only
+
+```{r}
+( AK_2012_2022 = st_join(joinSelect, na1, largest=TRUE) %>% 
+  filter(FORMAL_EN == "United States of America") %>% 
+  filter(year != 2023) )
+```
+
+```{r}
+min(AK_2012_2022$year)
+max(AK_2012_2022$year)
+
+```
+
+```{r}
+AK_2012_2022 %>% filter(year==2013)
+
+```
+2013 has 34,822
+
+## write to shapefile
+
+```{r eval=FALSE, include=FALSE}
+st_write(joinSelect, "../outputs/spatialDataCreate/AkLightning12_23.shp", driver="ESRI Shapefile")
+```
+
+```{r}
+st_write(AK_2012_2022, dsn= "../outputs/spatialDataCreate/AkLightning2012_2022_20240915.gpkg", layer='lightning')
+```
+
+## write csv
+```{r}
+( joinSelectDf = joinSelect %>% st_drop_geometry() )
+```
+```{r}
+write_csv(joinSelectDf ,"../outputs/spatialDataCreate/AkLightning12_23.csv")
+```
+
+```{r}
+( AK_2012_2022_csv = AK_2012_2022 %>% st_drop_geometry() )
+```
+```{r}
+write_csv(AK_2012_2022_csv ,"../outputs/spatialDataCreate/csv/AkLightning2012_2023_20240915.csv")
+```
+
+# Read geopackage
+
+```{r}
+# read in layers to environment, suppress messages with quiet=TRUE
+akgpkg <- st_read(dsn =  "../outputs/spatialDataCreate/AkLightning13_23.gpkg", layer='lightning')
+```
+```{r}
+akgpkg
+```
+
+# Maps
+
+## Map area zoom
+```{r zoomMap}
+#### zoom to kamchatka, different projection ####
+
+zoom_to <- c(-130.46, 64.93)  # ~ center of Kamchatka
+zoom_level <- 3
+
+# Lambert azimuthal equal-area projection around center of interest
+#target_crs <- polarProj#sprintf('+proj=laea +lon_0=%f +lat_0=%f', zoom_to[1], zoom_to[2])
+
+
+C <- 40075016.686   # ~ circumference of Earth in meters
+x_span <- C / 2^(zoom_level+.1)
+y_span <- C / 2^(zoom_level+.5)   # also sets aspect ratio
+
+zoom_to_xy <- st_transform(st_sfc(st_point(zoom_to), crs = 4326), crs = ecozoneProjection)
+zoom_to_xy
+
+disp_window <- st_sfc(st_point(st_coordinates(zoom_to_xy - c(x_span / 2, y_span / 2))),
+                      st_point(st_coordinates(zoom_to_xy + c(x_span / 2, y_span / 2))),
+                      crs = ecozoneProjection)
+
+```
+
+```{r map, echo=FALSE}
+ggplot() +
+     geom_sf(data = na1, fill = "#F9F6EE", colour="#A9AB9D") +
+  
+    geom_sf(data = joinSelect, aes(fill='#998ec3', color='#998ec3'), pch=21, stroke =1, alpha=.25) +
+ geom_sf(data = eco, fill = NA, colour="black") +
+  #coord_sf() +
+  
+  coord_sf(xlim = st_coordinates(disp_window)[,'X'], ylim = st_coordinates(disp_window)[,'Y']) +
+  theme(panel.grid.major = element_line(color = gray(0.5), linetype = "dashed", linewidth = 0.5), 
+        panel.background = element_rect(fill = "#C5D8D7")) +
+  theme(plot.margin=unit(c(0,0,0,0), "mm")) + 
+  theme(legend.position = "bottom", 
+        axis.title.x = element_blank(), 
+        axis.title.y = element_blank())
+
+```

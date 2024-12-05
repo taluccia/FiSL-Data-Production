@@ -1,0 +1,42 @@
+---
+title: "QAQC Lightning"
+author: "Anna Talucci"
+date: "2024-11-26"
+output: html_document
+---
+
+# Overview
+
+QAQC Lightning data
+
+# Packages
+
+```{r}
+library(tidyverse)
+library(sf)
+library(lubridate)
+```
+
+# Data
+
+```{r}
+gld20122015 = read_csv("../outputs/spatialDataCreate/csv/GLD_Above_2012_2015_20240912.csv")
+```
+
+```{r}
+gld20162022 = read_csv("../outputs/spatialDataCreate/csv/GLD_Above_2016_2022_20240912.csv")
+```
+
+
+```{r}
+gld20122015
+```
+
+
+
+```{r}
+gld20122015 %>% 
+  group_by(year) %>%
+  summarize(n=n())
+  
+```

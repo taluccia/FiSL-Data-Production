@@ -1,0 +1,139 @@
+---
+title: "Map Lightning"
+author: "Anna Talucci"
+date: "2024-09-09"
+output: html_document
+---
+```{r clearEnvironment, include=FALSE}
+rm(list=ls())
+```
+
+# Overview
+Map outputs from subseting GLD Data
+
+# Packages
+
+```{r}
+library(tidyverse)
+library(sf)
+library(lubridate)
+```
+
+# Data
+
+```{r}
+eco = st_read("../data/spatialData/dire_ecoregs_caea/dire_ecoregs_caea.shp", "dire_ecoregs_caea")
+```
+
+```{r}
+join2012_2015 = st_read("../outputs/spatialDataCreate/geopackage/GLD_Above_2012_2015.gpkg")
+```
+
+```{r}
+join2016_2022 = st_read("../outputs/spatialDataCreate/geopackage/GLD_Above_2016_2022.gpkg")
+```
+
+
+## World map
+https://datacatalog.worldbank.org/dataset/world-bank-official-boundaries
+
+```{r}
+wrld = st_read("../data/spatialData/world/WB_countries_Admin0_10m.shp", "WB_countries_Admin0_10m")
+```
+### Subset for North America 
+
+```{r}
+na = wrld %>% filter(FORMAL_EN %in% c("Canada", "United States of America"))
+```
+
+# Quick Plots
+
+```{r}
+plot(st_geometry(eco))
+```
+
+# Reproject
+
+## Define Projection
+
+```{r}
+st_crs(eco)
+( ecozoneProjection = st_crs(eco)$proj4string )
+```
+
+## Reproject
+
+```{r}
+na1 = st_transform(na, crs=ecozoneProjection)
+```
+
+```{r}
+na1
+```
+
+# Maps
+
+## Define zoom level
+
+```{r zoomMap}
+#### zoom to kamchatka, different projection ####
+
+zoom_to <- c(-130.46, 64.93)  # ~ center of Kamchatka
+zoom_level <- 3
+
+# Lambert azimuthal equal-area projection around center of interest
+#target_crs <- polarProj#sprintf('+proj=laea +lon_0=%f +lat_0=%f', zoom_to[1], zoom_to[2])
+
+
+C <- 40075016.686   # ~ circumference of Earth in meters
+x_span <- C / 2^(zoom_level+.1)
+y_span <- C / 2^(zoom_level+.5)   # also sets aspect ratio
+
+zoom_to_xy <- st_transform(st_sfc(st_point(zoom_to), crs = 4326), crs = ecozoneProjection)
+zoom_to_xy
+
+disp_window <- st_sfc(st_point(st_coordinates(zoom_to_xy - c(x_span / 2, y_span / 2))),
+                      st_point(st_coordinates(zoom_to_xy + c(x_span / 2, y_span / 2))),
+                      crs = ecozoneProjection)
+
+```
+
+## Create Map 2012-2015
+
+```{r map, echo=FALSE}
+ggplot() +
+     geom_sf(data = na1, fill = "#F9F6EE", colour="#A9AB9D") +
+  
+    geom_sf(data = canada_2012_2015, aes(fill='#998ec3', color='#998ec3'), pch=21, stroke =1, alpha=.25) +
+ geom_sf(data = eco, fill = NA, colour="black") +
+  #coord_sf() +
+  
+  coord_sf(xlim = st_coordinates(disp_window)[,'X'], ylim = st_coordinates(disp_window)[,'Y']) +
+  theme(panel.grid.major = element_line(color = gray(0.5), linetype = "dashed", linewidth = 0.5), 
+        panel.background = element_rect(fill = "#C5D8D7")) +
+  theme(plot.margin=unit(c(0,0,0,0), "mm")) + 
+  theme(legend.position = "bottom", 
+        axis.title.x = element_blank(), 
+        axis.title.y = element_blank())
+
+```
+
+## Create Map 2016-2022
+
+```{r map, echo=FALSE}
+ggplot() +
+     geom_sf(data = na1, fill = "#F9F6EE", colour="#A9AB9D") +
+  
+    geom_sf(data = canada_2016_2022, aes(fill='#998ec3', color='#998ec3'), pch=21, stroke =1, alpha=.25) +
+ geom_sf(data = eco, fill = NA, colour="black") +
+  #coord_sf() +
+  
+  coord_sf(xlim = st_coordinates(disp_window)[,'X'], ylim = st_coordinates(disp_window)[,'Y']) +
+  theme(panel.grid.major = element_line(color = gray(0.5), linetype = "dashed", linewidth = 0.5), 
+        panel.background = element_rect(fill = "#C5D8D7")) +
+  theme(plot.margin=unit(c(0,0,0,0), "mm")) + 
+  theme(legend.position = "bottom", 
+        axis.title.x = element_blank(), 
+        axis.title.y = element_blank())
+
+```
