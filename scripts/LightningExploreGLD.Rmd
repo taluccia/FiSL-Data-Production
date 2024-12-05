@@ -56,6 +56,20 @@ f
 
 ```
 
+## 2012-2015
+
+```{r}
+txt2012 = read_csv("../data/lightningData/GLD360/GLD360_2012.txt")
+txt2013 = read_csv("../data/lightningData/GLD360/GLD360_2013.txt")
+txt2014 = read_csv("../data/lightningData/GLD360/GLD360_2014.txt")
+txt2015 = read_csv("../data/lightningData/GLD360/GLD360_2015.txt")
+```
+```{r}
+txt2012
+txt2013
+txt2014
+txt2015
+```
 
 ## Get Eco Projection
 
@@ -86,6 +100,23 @@ clean <- function(df){
 }
 ```
 
+```{r}
+clean360 <- function(df){ 
+  df %>%  
+  mutate(Date = ymd(Date)) %>%
+  dplyr::mutate(year = lubridate::year(Date), 
+                month = lubridate::month(Date), 
+                day = lubridate::day(Date)) %>%
+    filter(month %in% c(4,5,6,7, 8, 9, 10)) %>%
+    select(-Peak_current_kA) %>%
+    rename(date=Date, time=Time, latitude=Latitude, longitude=Longitude)
+  
+}
+```
+
+# Clean
+
+## 2016-2022
 
 ```{r}
 ( df2016 = list2016 %>% clean() )
@@ -96,11 +127,55 @@ clean <- function(df){
 ```
 
 ```{r}
-combine = bind_rows(df2016, df2017, df2018, df2021, df2022)
+read_csv(list2019[12])
+```
+```{r}
+list2019
 ```
 
 ```{r}
+( df2019 = list2019[4:10] %>% clean() )
+```
+```{r}
+max(df2019$month)
+```
+```{r}
+read_csv(list2020[4])
+```
+
+```{r}
+( df2020 = list2020[5:10] %>% clean() )
+```
+
+## 2012-2015
+
+```{r}
+( df2012 = txt2012 %>% clean360() )
+( df2013 = txt2013 %>% clean360() )
+( df2014 = txt2014 %>% clean360() )
+( df2015 = txt2015 %>% clean360() )
+```
+
+## Combine
+
+### 2016-2022
+
+```{r eval=FALSE, include=FALSE}
+combine = bind_rows(df2016, df2017, df2018, df2019, df2020, df2021, df2022)
+```
+
+```{r eval=FALSE, include=FALSE}
 combine
+```
+
+### 2012-2015
+
+```{r eval=FALSE, include=FALSE}
+combine360 = bind_rows(df2012, df2013, df2014, df2015)
+```
+
+```{r eval=FALSE, include=FALSE}
+combine360
 ```
 
 ## Function to make points
@@ -112,19 +187,114 @@ df_to_sf <- function(x){
 ```
 
 ## to point
-
 ```{r}
+df2012pts = df2012 %>% df_to_sf() 
+df2013pts = df2013 %>% df_to_sf() 
+df2014pts = df2014 %>% df_to_sf() 
+df2015pts = df2015 %>% df_to_sf() 
+df2016pts = df2016 %>% df_to_sf() 
+df2017pts = df2017 %>% df_to_sf() 
+df2018pts = df2018 %>% df_to_sf() 
+df2019pts = df2019 %>% df_to_sf() 
+df2020pts = df2020 %>% df_to_sf() 
+df2021pts = df2021 %>% df_to_sf() 
+df2022pts = df2022 %>% df_to_sf() 
+```
+
+```{r eval=FALSE, include=FALSE}
 ( gldpts = combine %>% df_to_sf() )
 ```
 
-## Reproject To Project Projection
+```{r eval=FALSE, include=FALSE}
+( gld360pts = combine360 %>% df_to_sf() )
+```
 
+## Reproject To Project Projection
 ```{r}
+df2012ptsProj = st_transform(df2012pts, crs=ecozoneProjection)
+df2013ptsProj = st_transform(df2013pts, crs=ecozoneProjection)
+df2014ptsProj = st_transform(df2014pts, crs=ecozoneProjection)
+df2015ptsProj = st_transform(df2015pts, crs=ecozoneProjection)
+df2016ptsProj = st_transform(df2016pts, crs=ecozoneProjection)
+df2017ptsProj = st_transform(df2017pts, crs=ecozoneProjection)
+df2018ptsProj = st_transform(df2018pts, crs=ecozoneProjection)
+df2019ptsProj = st_transform(df2019pts, crs=ecozoneProjection)
+df2020ptsProj = st_transform(df2020pts, crs=ecozoneProjection)
+df2021ptsProj = st_transform(df2021pts, crs=ecozoneProjection)
+df2022ptsProj = st_transform(df2022pts, crs=ecozoneProjection)
+```
+
+```{r eval=FALSE, include=FALSE}
 gldEcoProj = st_transform(gldpts, crs=ecozoneProjection)
+```
+
+```{r eval=FALSE, include=FALSE}
+gld360EcoProj = st_transform(gld360pts, crs=ecozoneProjection)
 ```
 
 ## write to shapefile
 
+### shapefile
+
 ```{r eval=FALSE, include=FALSE}
-st_write(gldEcoProj, "../outputs/spatialDataCreate/GLD16_18_21_22.shp", driver="ESRI Shapefile")
+st_write(gldEcoProj, "../outputs/spatialDataCreate/shapefile/GLD_2016_2022_20241127.shp", driver="ESRI Shapefile")
+```
+
+```{r eval=FALSE, include=FALSE}
+st_write(gld360EcoProj, "../outputs/spatialDataCreate/shapefile/GLD360_2012_2015_20241127.shp", driver="ESRI Shapefile")
+```
+
+### geopackage
+```{r eval=FALSE, include=FALSE}
+st_write(gldEcoProj, "../outputs/spatialDataCreate/geopackage/GLD_2016_2022_20241127.gpkg")
+```
+
+```{r eval=FALSE, include=FALSE}
+st_write(gld360EcoProj, "../outputs/spatialDataCreate/geopackage/GLD360_2012_2015_20241127.gpkg")
+```
+
+### geopackage individual years
+
+```{r}
+st_write(df2012ptsProj, "../outputs/spatialDataCreate/geopackage/gldByYear/GLD2012.gpkg")
+```
+
+```{r}
+st_write(df2013ptsProj, "../outputs/spatialDataCreate/geopackage/gldByYear/GLD2013.gpkg")
+```
+
+```{r}
+st_write(df2014ptsProj, "../outputs/spatialDataCreate/geopackage/gldByYear/GLD2014.gpkg")
+```
+
+```{r}
+st_write(df2015ptsProj, "../outputs/spatialDataCreate/geopackage/gldByYear/GLD2015.gpkg")
+```
+
+```{r}
+st_write(df2016ptsProj, "../outputs/spatialDataCreate/geopackage/gldByYear/GLD2016.gpkg")
+```
+
+```{r}
+st_write(df2017ptsProj, "../outputs/spatialDataCreate/geopackage/gldByYear/GLD2017.gpkg")
+```
+
+```{r}
+st_write(df2018ptsProj, "../outputs/spatialDataCreate/geopackage/gldByYear/GLD2018.gpkg")
+```
+
+```{r}
+st_write(df2019ptsProj, "../outputs/spatialDataCreate/geopackage/gldByYear/GLD2019.gpkg")
+```
+
+```{r}
+st_write(df2020ptsProj, "../outputs/spatialDataCreate/geopackage/gldByYear/GLD2020.gpkg")
+```
+
+```{r}
+st_write(df2021ptsProj, "../outputs/spatialDataCreate/geopackage/gldByYear/GLD2021.gpkg")
+```
+
+```{r}
+st_write(df2022ptsProj, "../outputs/spatialDataCreate/geopackage/gldByYear/GLD2022.gpkg")
 ```
